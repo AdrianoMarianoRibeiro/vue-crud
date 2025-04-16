@@ -1,10 +1,13 @@
 {
   "compilerOptions": {
+    "typeRoots": ["./node_modules/@types"],
     "target": "esnext",
     "module": "esnext",
     "strict": true,
     "jsx": "preserve",
     "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -36,5 +39,5 @@
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
 }
