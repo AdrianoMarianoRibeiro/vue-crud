@@ -35,12 +35,14 @@
 
     <v-main>
       <router-view />
+      <ErrorModal />
     </v-main>
   </v-app>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+import ErrorModal from '@/components/ErrorModal.vue';
 
 export default Vue.extend({
   name: "App",
@@ -48,5 +50,8 @@ export default Vue.extend({
   data: () => ({
     //
   }),
+  components: {
+    ErrorModal,
+  },
 });
 </script>

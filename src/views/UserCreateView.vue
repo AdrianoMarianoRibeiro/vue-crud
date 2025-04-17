@@ -6,11 +6,12 @@
 </template>
 
 <script lang="ts">
+import UserForm from '@/components/UserForm.vue';
+import { handleApiError } from '@/services/errorHandler';
+import { UserService } from '@/services/user.service';
+import { User } from '@/types/user';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import UserForm from '@/components/UserForm.vue';
-import api from "@/plugins/api";
-import { User } from '@/types/user';
 
 @Component({
   components: {
@@ -20,13 +21,9 @@ import { User } from '@/types/user';
 export default class UserCreateView extends Vue {
   async handleSubmit(payload: User) {
     try {
-      // Exemplo de chamada a API
-      const response = await api.post('user', payload);
-      console.log('Usuário criado com sucesso:', response.data);
-
-      // Aqui você pode redirecionar, limpar, ou mostrar sucesso
+      await UserService.createUser(payload);
     } catch (error) {
-      console.error('Erro ao criar usuário:', error);
+      handleApiError(error);
     }
   }
 }

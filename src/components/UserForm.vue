@@ -14,6 +14,10 @@
         type="email"
         required
       ></v-text-field>
+
+      <v-alert v-if="errorMessage" type="error" dense>
+        {{ errorMessage }}
+    </v-alert>
   
       <v-btn type="submit" color="primary">Submit</v-btn>
     </v-form>
@@ -28,24 +32,32 @@ export default class UserForm extends Vue {
     @Prop({ default: () => ({ name: '', email: '' }) })
     readonly user!: User;
 
+    @Prop({ default: '' })
+    readonly errorMessage!: string;
+
     localUser: User = { name: '', email: '' };
     isFormValid = false;
 
     @Ref('form') readonly form!: HTMLFormElement;
 
     get nameRules() {
-    return [
-      (v: string) => !!v || 'Nome é obrigatório',
-      (v: string) => v.length >= 3 || 'Nome precisa ter pelo menos 3 caracteres',
-    ];
-  }
+        return [
+            (value: string) => !!value || 'Nome é obrigatório',
+            (value: string) => value.length >= 3 || 'Nome precisa ter pelo menos 3 caracteres',
+        ];
+    }
 
-  get emailRules() {
-    return [
-      (v: string) => !!v || 'Email é obrigatório',
-      (v: string) => /.+@.+\..+/.test(v) || 'Email inválido',
-    ];
-  }
+    get emailRules() {
+        return [
+            (value: string) => !!value || 'Email é obrigatório',
+            (value: string) => /.+@.+\..+/.test(value) || 'Email inválido',
+        ];
+    }
+
+    created() {
+        this.localUser = { ...this.user };
+    }
+
 
     // Método de envio do formulário
     submitForm() {
@@ -53,8 +65,8 @@ export default class UserForm extends Vue {
         if (!isValid) return;
 
         this.$emit('submit', {
-        name: this.localUser.name,
-        email: this.localUser.email,
+            name: this.localUser.name,
+            email: this.localUser.email,
         });
     }
 }
