@@ -1,7 +1,8 @@
 <template>
   <v-container>
     <h1 class="mb-4">Criar Usuário</h1>
-    <UserForm @submit="handleSubmit" />
+    <UserForm ref="userForm" @submit="handleSubmit" />
+
   </v-container>
 </template>
 
@@ -21,7 +22,10 @@ import { Component } from 'vue-property-decorator';
 export default class UserCreateView extends Vue {
   async handleSubmit(payload: User) {
     try {
-      await UserService.createUser(payload);
+      await UserService.create(payload);
+      this.$store.dispatch('toast/success', 'Usuário criado com sucesso!');
+      // Resetar os campos do formulário
+      (this.$refs.userForm as InstanceType<typeof UserForm>).reset();
     } catch (error) {
       handleApiError(error);
     }

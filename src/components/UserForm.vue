@@ -58,6 +58,10 @@ export default class UserForm extends Vue {
         this.localUser = { ...this.user };
     }
 
+    reset() {
+      this.localUser = { name: '', email: '' };
+      (this.$refs.form as any).resetValidation();
+    }
 
     // Método de envio do formulário
     submitForm() {
