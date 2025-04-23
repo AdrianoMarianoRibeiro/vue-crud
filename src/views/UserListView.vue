@@ -57,7 +57,7 @@
         <v-card-title>Excluir Usuário</v-card-title>
         <v-card-text>
           <v-form ref="deleteForm" v-if="editedOrDeletedUser">
-            <p>Nome: {{ editedOrDeletedUser.name }}</p>
+            <p>Deseja realmente excluir o usuário <strong>{{ editedOrDeletedUser.name }}</strong>?</p>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -67,98 +67,149 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
   </v-container>
 </template>
 
 <script lang="ts">
+import Vue from 'vue';
 import { UserService } from '@/services/user.service';
-import { User } from '@/types/user';
-import { Vue, Component } from 'vue-property-decorator';
 
-@Component
-export default class UserListView extends Vue {
-  users: Array<User> = [];
-  loading = false;
-  totalItems = 0;
-  editDialog = false;
-  deleteDialog = false;
-  editedOrDeletedUser: User | null = null;
+// Define a interface para o usuário
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  [key: string]: any; // Para propriedades adicionais que possam vir da API
+}
 
-  options = {
-    page: 1,
-    itemsPerPage: 10,
-  };
+// Define a interface para as opções da tabela
+interface DataTableOptions {
+  page: number;
+  itemsPerPage: number;
+  sortBy?: string[];
+  sortDesc?: boolean[];
+  groupBy?: string[];
+  groupDesc?: boolean[];
+  multiSort?: boolean;
+}
 
-  headers = [
-    { text: 'Nome', value: 'name' },
-    { text: 'Email', value: 'email' },
-    { text: 'Ações', value: 'actions', sortable: false },
-  ];
+// Define a interface para os cabeçalhos da tabela
+interface Header {
+  text: string;
+  value: string;
+  align?: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  groupable?: boolean;
+  divider?: boolean;
+  class?: string;
+  cellClass?: string;
+  width?: string;
+}
 
+export default Vue.extend({
+  name: 'UserListView',
+  
+  data() {
+    return {
+      users: [] as User[],
+      loading: false,
+      totalItems: 0,
+      editDialog: false,
+      deleteDialog: false,
+      editedOrDeletedUser: null as User | null,
+      options: {
+        page: 1,
+        itemsPerPage: 10,
+      } as DataTableOptions,
+      headers: [
+        { text: 'Nome', value: 'name' },
+        { text: 'Email', value: 'email' },
+        { text: 'Ações', value: 'actions', sortable: false },
+      ] as Header[]
+    };
+  },
+  
+  computed: {
+    formTitle(): string {
+      return this.editDialog ? 'Editar Usuário' : 'Excluir Usuário';
+    }
+  },
+  
+  watch: {
+    options: {
+      handler() {
+        this.fetchUsers();
+      },
+      deep: true
+    }
+  },
+  
   mounted() {
     this.fetchUsers();
-  }
+  },
+  
+  methods: {
+    async fetchUsers(): Promise<void> {
+      this.loading = true;
+      try {
+        const { page, itemsPerPage } = this.options;
+        const response = await UserService.findAll(page, itemsPerPage);
+        this.users = response.data;
+        this.totalItems = response.meta.itemCount;
+      } catch (error) {
+        this.$store.dispatch('toast/error', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async openModal(userId: string, isDelete: boolean): Promise<void> {
+      try {
+        const response = await UserService.findById(userId);
+        this.editedOrDeletedUser = response.data;
+        isDelete ? this.deleteDialog = true : this.editDialog = true;
+      } catch (error) {
+        this.$store.dispatch('toast/error', 'Erro ao carregar usuário');
+      }
+    },
+    
+    closeModal(): void {
+      this.editDialog = false;
+      this.deleteDialog = false;
+      this.editedOrDeletedUser = null;
+    },
+    
+    async updateUser(): Promise<void> {
+      if (!this.editedOrDeletedUser) return;
 
-  async fetchUsers() {
-    this.loading = true;
-    try {
-      const { page, itemsPerPage } = this.options;
-      const response = await UserService.findAll(page, itemsPerPage);
-      this.users = response.data;
-      this.totalItems = response.meta.itemCount;
-    } catch (error) {
-      this.$store.dispatch('toast/error', error);
-    } finally {
-      this.loading = false;
+      try {
+        await UserService.update(this.editedOrDeletedUser.id, {
+          name: this.editedOrDeletedUser.name,
+          email: this.editedOrDeletedUser.email,
+        });
+        this.$store.dispatch('toast/success', 'Usuário atualizado com sucesso!');
+        this.closeModal();
+        this.fetchUsers();
+      } catch (error) {
+        this.$store.dispatch('toast/error', 'Erro ao atualizar usuário');
+      }
+    },
+    
+    async deleteUser(): Promise<void> {
+      if (!this.editedOrDeletedUser) return;
+
+      try {
+        await UserService.delete(this.editedOrDeletedUser.id);
+        this.$store.dispatch('toast/success', 'Usuário removido com sucesso!');
+        this.closeModal();
+        this.fetchUsers();
+      } catch (error) {
+        this.$store.dispatch('toast/error', 'Erro ao remover usuário');
+      }
     }
   }
-
-  async openModal(userId: string, isDelete: boolean) {
-    try {
-      const response = await UserService.findById(userId);
-      this.editedOrDeletedUser = response.data;
-      isDelete ? this.deleteDialog = true : this.editDialog = true;
-    } catch (error) {
-      this.$store.dispatch('toast/error', 'Erro ao carregar usuário');
-    }
-  }
-
-  closeModal() {
-    this.editDialog = false;
-    this.deleteDialog = false;
-    this.editedOrDeletedUser = null;
-  }
-
-  async updateUser() {
-    if (!this.editedOrDeletedUser) return;
-
-    try {
-      await UserService.update(this.editedOrDeletedUser.id!, {
-        name: this.editedOrDeletedUser.name,
-        email: this.editedOrDeletedUser.email,
-      });
-      this.$store.dispatch('toast/success', 'Usuário atualizado com sucesso!');
-      this.closeModal();
-      this.fetchUsers();
-    } catch (error) {
-      this.$store.dispatch('toast/error', 'Erro ao atualizar usuário');
-    }
-  }
-
-  async deleteUser() {
-    if (!this.editedOrDeletedUser) return;
-
-    try {
-      await UserService.delete(this.editedOrDeletedUser.id!);
-      this.$store.dispatch('toast/success', 'Usuário removido com sucesso!');
-      this.closeModal();
-      this.fetchUsers();
-    } catch (error) {
-      this.$store.dispatch('toast/error', 'Erro ao remover usuário');
-    }
-  }
-}
+});
 </script>
 
 <style scoped>
