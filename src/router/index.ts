@@ -20,6 +20,16 @@ const routes: Array<RouteConfig> = [
     component: () => import("@/views/UserListView.vue"),
   },
   {
+    path: "/profile/create",
+    name: "ProfileCreate",
+    component: () => import("@/views/ProfileCreateView.vue"),
+  },
+  {
+    path: "/profile/list",
+    name: "ProfileList",
+    component: () => import("@/views/ProfileListView.vue"),
+  },
+  {
     path: "/about",
     name: "about",
     component: () => import("@/views/AboutView.vue"),

@@ -10,7 +10,7 @@
 import UserForm from '@/components/UserForm.vue';
 import { handleApiError } from '@/services/errorHandler';
 import { UserService } from '@/services/user.service';
-import { User } from '@/types/user';
+import { IUser } from '@/types/user';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 
@@ -20,7 +20,7 @@ import { Component } from 'vue-property-decorator';
   },
 })
 export default class UserCreateView extends Vue {
-  async handleSubmit(payload: User) {
+  async handleSubmit(payload: IUser) {
     try {
       await UserService.create(payload);
       this.$store.dispatch('toast/success', 'Usuário criado com sucesso!');

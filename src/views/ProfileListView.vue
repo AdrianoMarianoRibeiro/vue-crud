@@ -2,9 +2,9 @@
   <v-container>
     <v-card>
       <v-card-title>
-        Lista de Usuários
+        Lista de Perfis
         <v-spacer></v-spacer>
-        <v-btn color="primary" :to="{ name: 'UserCreate' }">
+        <v-btn color="primary" :to="{ name: 'ProfileCreate' }">
           <v-icon left>mdi-account-plus</v-icon>
           Cadastrar
         </v-btn>
@@ -12,15 +12,12 @@
 
       <v-data-table
         :headers="headers"
-        :items="users"
+        :items="profiles"
         :loading="loading"
-        :options.sync="options"
-        :server-items-length="totalItems"
-        :items-per-page="options.itemsPerPage"
         class="elevation-1"
-        loading-text="Carregando usuários..."
-        no-data-text="Nenhum usuário encontrado"
-        @update:options="fetchUsers"
+        loading-text="Carregando perfis..."
+        no-data-text="Nenhum perfil encontrado"
+        @update:options="fetchProfiles"
       >
         <template v-slot:[`item.actions`]="{ item }">
           <v-icon small class="mr-2" color="primary" @click="openModal(item.id, false)">
@@ -36,17 +33,16 @@
     <!-- Modal de Edição -->
     <v-dialog v-model="editDialog" max-width="500px" persistent>
       <v-card>
-        <v-card-title>Editar Usuário</v-card-title>
+        <v-card-title>Editar Perfil</v-card-title>
         <v-card-text>
-          <v-form ref="editForm" v-if="editedOrDeletedUser">
-            <v-text-field v-model="editedOrDeletedUser.name" label="Nome" required></v-text-field>
-            <v-text-field v-model="editedOrDeletedUser.email" label="Email" required></v-text-field>
+          <v-form ref="editForm" v-if="editedOrDeletedProfile">
+            <v-text-field v-model="editedOrDeletedProfile.name" label="Nome" required></v-text-field>
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="red darken-1" text @click="closeModal">Cancelar</v-btn>
-          <v-btn color="green darken-1" text @click="updateUser">Salvar</v-btn>
+          <v-btn color="green darken-1" text @click="updateProfile">Salvar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -54,16 +50,16 @@
     <!-- Modal de Exclusão -->
     <v-dialog v-model="deleteDialog" max-width="500px" persistent>
       <v-card>
-        <v-card-title>Excluir Usuário</v-card-title>
+        <v-card-title>Excluir Perfil</v-card-title>
         <v-card-text>
-          <v-form ref="deleteForm" v-if="editedOrDeletedUser">
-            <p>Deseja realmente excluir o usuário <strong>{{ editedOrDeletedUser.name }}</strong>?</p>
+          <v-form ref="deleteForm" v-if="editedOrDeletedProfile">
+            <p>Deseja realmente excluir o perfil <strong>{{ editedOrDeletedProfile.name }}</strong>?</p>
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="red darken-1" text @click="closeModal">Não</v-btn>
-          <v-btn color="green darken-1" text @click="deleteUser">Sim</v-btn>
+          <v-btn color="green darken-1" text @click="deleteProfile">Sim</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -72,21 +68,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { UserService } from '@/services/user.service';
-import { IUser } from '@/types/user';
-
-
-
-// Define a interface para as opções da tabela
-interface DataTableOptions {
-  page: number;
-  itemsPerPage: number;
-  sortBy?: string[];
-  sortDesc?: boolean[];
-  groupBy?: string[];
-  groupDesc?: boolean[];
-  multiSort?: boolean;
-}
+import { ProfileService } from '@/services/profile.service';
+import { IProfile } from '@/types/profile';
 
 // Define a interface para os cabeçalhos da tabela
 interface Header {
@@ -103,23 +86,17 @@ interface Header {
 }
 
 export default Vue.extend({
-  name: 'UserListView',
+  name: 'ProfileListView',
   
   data() {
     return {
-      users: [] as IUser[],
+      profiles: [] as IProfile[],
       loading: false,
-      totalItems: 0,
       editDialog: false,
       deleteDialog: false,
-      editedOrDeletedUser: null as IUser | null,
-      options: {
-        page: 1,
-        itemsPerPage: 10,
-      } as DataTableOptions,
+      editedOrDeletedProfile: null as IProfile | null,
       headers: [
         { text: 'Nome', value: 'name' },
-        { text: 'Email', value: 'email' },
         { text: 'Ações', value: 'actions', sortable: false },
       ] as Header[]
     };
@@ -127,31 +104,29 @@ export default Vue.extend({
   
   computed: {
     formTitle(): string {
-      return this.editDialog ? 'Editar Usuário' : 'Excluir Usuário';
+      return this.editDialog ? 'Editar Perfil' : 'Excluir Perfil';
     }
   },
   
   watch: {
     options: {
       handler() {
-        this.fetchUsers();
+        this.fetchProfiles();
       },
       deep: true
     }
   },
   
   mounted() {
-    this.fetchUsers();
+    this.fetchProfiles();
   },
   
   methods: {
-    async fetchUsers(): Promise<void> {
+    async fetchProfiles(): Promise<void> {
       this.loading = true;
       try {
-        const { page, itemsPerPage } = this.options;
-        const response = await UserService.findAll(page, itemsPerPage);
-        this.users = response.data;
-        this.totalItems = response.meta.itemCount;
+        const response = await ProfileService.findAll();
+        this.profiles = response.data;
       } catch (error) {
         this.$store.dispatch('toast/error', error);
       } finally {
@@ -159,46 +134,45 @@ export default Vue.extend({
       }
     },
     
-    async openModal(userId: string, isDelete: boolean): Promise<void> {
+    async openModal(id: string, isDelete: boolean): Promise<void> {
       try {
-        const response = await UserService.findById(userId);
-        this.editedOrDeletedUser = response.data;
+        const response = await ProfileService.findById(id);
+        this.editedOrDeletedProfile = response.data;
         isDelete ? this.deleteDialog = true : this.editDialog = true;
       } catch (error) {
-        this.$store.dispatch('toast/error', 'Erro ao carregar usuário');
+        this.$store.dispatch('toast/error', 'Erro ao carregar perfil');
       }
     },
     
     closeModal(): void {
       this.editDialog = false;
       this.deleteDialog = false;
-      this.editedOrDeletedUser = null;
+      this.editedOrDeletedProfile = null;
     },
     
-    async updateUser(): Promise<void> {
-      if (!this.editedOrDeletedUser) return;
+    async updateProfile(): Promise<void> {
+      if (!this.editedOrDeletedProfile) return;
 
       try {
-        await UserService.update(this.editedOrDeletedUser.id!, {
-          name: this.editedOrDeletedUser.name,
-          email: this.editedOrDeletedUser.email,
+        await ProfileService.update(this.editedOrDeletedProfile.id!, {
+          name: this.editedOrDeletedProfile.name,
         });
         this.$store.dispatch('toast/success', 'Usuário atualizado com sucesso!');
         this.closeModal();
-        this.fetchUsers();
+        this.fetchProfiles();
       } catch (error) {
         this.$store.dispatch('toast/error', 'Erro ao atualizar usuário');
       }
     },
     
-    async deleteUser(): Promise<void> {
-      if (!this.editedOrDeletedUser) return;
+    async deleteProfile(): Promise<void> {
+      if (!this.editedOrDeletedProfile) return;
 
       try {
-        await UserService.delete(this.editedOrDeletedUser.id!);
+        await ProfileService.delete(this.editedOrDeletedProfile.id!);
         this.$store.dispatch('toast/success', 'Usuário removido com sucesso!');
         this.closeModal();
-        this.fetchUsers();
+        this.fetchProfiles();
       } catch (error) {
         this.$store.dispatch('toast/error', 'Erro ao remover usuário');
       }

@@ -32,7 +32,29 @@
             <v-list-item-title>Listar</v-list-item-title>
           </v-list-item>
         </v-list-group>
+
+        <v-list-group prepend-icon="mdi-account-tie" no-action>
+          <template v-slot:activator>
+            <v-list-item-title>Perfil</v-list-item-title>
+          </template>
+  
+          <v-list-item :to="{ name: 'ProfileCreate' }" link>
+            <v-list-item-icon>
+              <v-icon>mdi-account-plus</v-icon>
+            </v-list-item-icon>
+            <v-list-item-title>Cadastrar</v-list-item-title>
+          </v-list-item>
+  
+          <v-list-item :to="{ name: 'ProfileList' }" link>
+            <v-list-item-icon>
+              <v-icon>mdi-format-list-bulleted</v-icon>
+            </v-list-item-icon>
+            <v-list-item-title>Listar</v-list-item-title>
+          </v-list-item>
+        </v-list-group>
+
       </v-list>
+      
     </v-navigation-drawer>
   </template>
   

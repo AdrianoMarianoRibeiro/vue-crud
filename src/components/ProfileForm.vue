@@ -1,20 +1,12 @@
 <template>
     <v-form ref="form" @submit.prevent="submitForm" v-model="isFormValid">
       <v-text-field
-        v-model="localUser.name"
+        v-model="localProfile.name"
         :rules="nameRules"
         label="Name"
         required
       ></v-text-field>
   
-      <v-text-field
-        v-model="localUser.email"
-        :rules="emailRules"
-        label="Email"
-        type="email"
-        required
-      ></v-text-field>
-
       <v-alert v-if="errorMessage" type="error" dense>
         {{ errorMessage }}
     </v-alert>
@@ -25,17 +17,17 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Ref } from 'vue-property-decorator';
-import { IUser } from '@/types/user';
+import { IProfile } from '@/types/profile';
 
 @Component
-export default class UserForm extends Vue {
-    @Prop({ default: () => ({ name: '', email: '' }) })
-    readonly user!: IUser;
+export default class ProfileForm extends Vue {
+    @Prop({ default: () => ({ name: ''}) })
+    readonly profile!: IProfile;
 
     @Prop({ default: '' })
     readonly errorMessage!: string;
 
-    localUser: IUser = { name: '', email: '' };
+    localProfile: IProfile = { name: ''};
     isFormValid = false;
 
     @Ref('form') readonly form!: HTMLFormElement;
@@ -43,23 +35,15 @@ export default class UserForm extends Vue {
     get nameRules() {
         return [
             (value: string) => !!value || 'Nome é obrigatório',
-            (value: string) => value.length >= 3 || 'Nome precisa ter pelo menos 3 caracteres',
         ];
     }
-
-    get emailRules() {
-        return [
-            (value: string) => !!value || 'Email é obrigatório',
-            (value: string) => /.+@.+\..+/.test(value) || 'Email inválido',
-        ];
-    }
-
+  
     created() {
-        this.localUser = { ...this.user };
+        this.localProfile = { ...this.profile };
     }
 
     reset() {
-      this.localUser = { name: '', email: '' };
+      this.localProfile = { name: ''};
       (this.$refs.form as any).resetValidation();
     }
 
@@ -69,8 +53,7 @@ export default class UserForm extends Vue {
         if (!isValid) return;
 
         this.$emit('submit', {
-            name: this.localUser.name,
-            email: this.localUser.email,
+            name: this.localProfile.name,
         });
     }
 }

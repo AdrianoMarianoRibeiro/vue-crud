@@ -1,31 +1,24 @@
-import api from "@/plugins/api";
-import { User } from "@/types/user";
+import { IUser } from "@/types/user";
+import { DefaultService } from "./default.service";
 
-export class UserService {
-  static async create(data: User) {
-    const response = await api.post("/user", data);
-    return response.data;
+export abstract class UserService {
+  static create(body: IUser) {
+    return DefaultService.create("/user", body);
   }
 
-  static async update(id: string, body: User) {
-    const response = await api.put(`/user/${id}`, body);
-    return response.data;
+  static update(id: string, body: IUser) {
+    return DefaultService.create(`/user/${id}`, body);
   }
 
-  static async delete(id: string) {
-    const response = await api.delete(`/user/${id}`);
-    return response.data;
+  static delete(id: string) {
+    return DefaultService.delete(`/user/${id}`);
   }
 
-  static async findAll(page = 1, take = 10) {
-    const response = await api.get("/user", {
-      params: { page, take },
-    });
-    return response.data;
+  static findAll(page = 1, take = 10) {
+    return DefaultService.findAll("/user", page, take);
   }
 
-  static async findById(id: string) {
-    const response = await api.get(`/user/${id}`);
-    return response.data;
+  static findById(id: string) {
+    return DefaultService.findById(`/user/${id}`);
   }
 }
